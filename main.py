@@ -30,9 +30,15 @@ class Policy:
                 self.waiting_period_days
         )
     def get_remaining_coverage(self):
+
+        total_claimed = 0
+
         for claim in self.claims:
-            if claim.status=="APPROVED":
-                total_claimed = claim.claim_amount
+
+                if claim.status == "APPROVED":
+
+                        total_claimed += claim.claim_amount
+
         return self.coverage_amount - total_claimed
     def can_cover(self, amount):
         return (
@@ -71,6 +77,43 @@ class User:
         self.policies = []
 
 
+class ClaimService:
+
+    def submit_claim(
+        self,
+        policy,
+        claim
+    ):
+
+        if not policy.isActive():
+
+            claim.status = "REJECTED"
+
+            return "Policy inactive"
+
+        if not policy.has_completed_waiting_period(
+            claim.claim_date
+        ):
+
+            claim.status = "REJECTED"
+
+            return "Waiting period not completed"
+
+        if not policy.can_cover(
+            claim.claim_amount
+        ):
+
+            claim.status = "REJECTED"
+
+            return "Coverage insufficient"
+
+        claim.status = "APPROVED"
+
+        policy.claims.append(claim)
+
+        return "Claim approved"
+
+
 rahul = User(
     "U001",
     "Rahul",
@@ -107,8 +150,21 @@ print(policy.has_completed_waiting_period(date(2026,2,15)))
 
 claim.status = "APPROVED"
 
-policy.claims.append(claim)
+# policy.claims.append(claim)
 print(
     policy.get_remaining_coverage()
 )
 print(policy.can_cover(60000))
+
+
+
+claim_service = ClaimService()
+result = claim_service.submit_claim(
+    policy,
+    claim
+)
+
+print(result)
+
+print(claim.status)
+
